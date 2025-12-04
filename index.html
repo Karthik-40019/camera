@@ -26,8 +26,10 @@
     .title-text-sub { font-size: 11px; color: #6b7280; }
 
     .badge-row { display: flex; gap: 6px; align-items: center; }
-    .chip { display:flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px;
-            background:#f9fafb; border:1px solid #e5e7eb; font-size:11px; font-weight:600; }
+    .chip {
+      display:flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px;
+      background:#f9fafb; border:1px solid #e5e7eb; font-size:11px; font-weight:600;
+    }
     .chip-icon { width:16px; height:16px; border-radius:50%; display:flex; align-items:center;
                  justify-content:center; font-size:10px; color:white; }
     .free .chip-icon { background:#16a34a; }
@@ -37,7 +39,7 @@
     .step-dot { width:17px; height:17px; border-radius:50%; border:1px solid #ccc; display:flex; justify-content:center; align-items:center; font-size:10px; }
     .step.active .step-dot { background:#0b5ed7; color:white; border-color:#0b5ed7; }
 
-    .field { margin-bottom:12px; }
+    .field { margin-bottom:12px; font-size:13px; }
     select, input {
       width:100%; padding:8px 10px; border-radius:8px;
       border:1px solid #d1d5db; background:#f9fafb;
@@ -52,13 +54,56 @@
 
     .footer-note { text-align:center; color:#6b7280; font-size:11px; margin-top:12px; }
 
-    /* TICKET PANEL */
+    /* =============================
+       CLEAN GREEN VERIFIED TICKET
+       ============================= */
     .ticket-panel {
-      margin-top:14px; padding:12px; border-radius:10px;
-      background:#f9fafb; border:1px solid #e5e7eb; display:none;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: #e6f9e6; /* G1 soft govt green */
+      border: 1px solid #34a853;
+      display: none;
     }
 
-    /* SCANNER UI (Futuristic Blue Gradient S4) */
+    .ticket-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .ticket-status {
+      background: #34a853;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .ticket-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 14px;
+    }
+
+    .ticket-label {
+      font-weight: 600;
+      color: #14532d;
+    }
+
+    .ticket-value {
+      font-weight: 600;
+      color: #064e3b;
+      text-align: right;
+      max-width: 180px;
+    }
+
+    /* =============================
+       FUTURISTIC BLUE SCANNER (S4)
+       ============================= */
     .scan-modal {
       position:fixed; inset:0; display:none; align-items:center; justify-content:center;
       background: radial-gradient(circle at top, #2563eb 0%, #020617 55%);
@@ -143,7 +188,7 @@
     </select>
   </div>
 
-  <!-- CASH AMOUNT FIELD -->
+  <!-- CASH AMOUNT -->
   <div class="field" id="cash-box" style="display:none;">
     <label>Enter Amount</label>
     <input type="number" id="cash-amount" placeholder="Enter Amount (₹)">
@@ -157,15 +202,34 @@
     <button class="pill-btn check-btn" id="check-btn">Check Pass</button>
   </div>
 
-  <div class="footer-note">Tap & Scan – like a metro entry gate.</div>
+  <div class="footer-note">Tap & Scan – just like a metro entry gate.</div>
 
-  <!-- TICKET PANEL -->
+  <!-- CLEAN TICKET PANEL -->
   <div class="ticket-panel" id="ticket-panel">
-    <div><b id="ticket-id"></b></div>
-    <div>Route: <b id="ticket-route"></b></div>
-    <div>Payment: <b id="ticket-pay"></b></div>
-    <div>Card ID: <b id="ticket-card"></b></div>
-    <div>Time: <b id="ticket-time"></b></div>
+    <div class="ticket-header">
+      <div class="ticket-status">✔ PASS VERIFIED</div>
+      <div id="ticket-id"></div>
+    </div>
+
+    <div class="ticket-row">
+      <div class="ticket-label">Route</div>
+      <div class="ticket-value" id="ticket-route"></div>
+    </div>
+
+    <div class="ticket-row">
+      <div class="ticket-label">Payment</div>
+      <div class="ticket-value" id="ticket-pay"></div>
+    </div>
+
+    <div class="ticket-row">
+      <div class="ticket-label">Card ID</div>
+      <div class="ticket-value" id="ticket-card"></div>
+    </div>
+
+    <div class="ticket-row">
+      <div class="ticket-label">Time</div>
+      <div class="ticket-value" id="ticket-time"></div>
+    </div>
   </div>
 
 </div>
@@ -173,14 +237,15 @@
 <!-- SCAN MODAL -->
 <div class="scan-modal" id="scan-modal">
   <div class="scan-inner">
-    <h3 id="scan-title-text">Scan QR Card</h3>
-    <p id="scan-subtitle-text">Align the QR in the box</p>
+    <h3>Scan QR Card</h3>
+    <p>Align the QR in the box</p>
     <div id="qr-reader"></div>
     <p id="scan-status">Initializing camera…</p>
     <button id="scan-cancel-btn" style="margin-top:12px; padding:6px 16px;">Cancel</button>
   </div>
 </div>
 
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -289,7 +354,7 @@
       id:id,
       route:`${sourceEl.value} → ${destEl.value}`,
       pay:paymentText,
-      card:qr,              // FIXED
+      card:qr,
       time:time
     };
 
@@ -312,12 +377,13 @@
     ticketId.textContent = t.id;
     ticketRoute.textContent = t.route;
     ticketPay.textContent = t.pay;
-    ticketCard.textContent = t.card;   // FIXED
+    ticketCard.textContent = t.card;
     ticketTime.textContent = t.time;
   }
 </script>
 
 </body>
 </html>
+
 
 
