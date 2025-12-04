@@ -22,7 +22,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f3f4f6; /* light grey govt-style */
+      background: #f3f4f6;
       padding: 20px;
     }
 
@@ -50,7 +50,6 @@
       gap: 8px;
     }
 
-    /* TSRTC LOGO STYLE */
     .tsrtc-logo {
       width: 38px;
       height: 38px;
@@ -158,7 +157,7 @@
     }
 
     .step.active .step-dot {
-      background: #0b5ed7; /* D4 govt blue */
+      background: #0b5ed7;
       border-color: #0b5ed7;
       color: #fff;
     }
@@ -218,7 +217,7 @@
       padding: 9px 14px;
       font-size: 13px;
       font-weight: 600;
-      background: #0b5ed7; /* D4 govt blue */
+      background: #0b5ed7;
       color: #ffffff;
       cursor: pointer;
     }
@@ -259,7 +258,7 @@
       text-align: center;
     }
 
-    /* Ticket panel - clean govt style */
+    /* Ticket panel */
     .ticket-panel {
       margin-top: 14px;
       padding: 10px 12px;
@@ -310,15 +309,16 @@
       color: #111827;
     }
 
-    /* Scan modal */
+    /* === SCANNER: FUTURISTIC BLUE GRADIENT (S4) === */
     .scan-modal {
       position: fixed;
       inset: 0;
-      background-color: rgba(15, 23, 42, 0.9);
+      background: radial-gradient(circle at top, #2563eb 0%, #020617 55%);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 50;
+      padding: 16px;
     }
 
     .scan-modal.active {
@@ -328,12 +328,13 @@
     .scan-inner {
       width: 100%;
       max-width: 360px;
-      padding: 18px 14px 16px;
+      padding: 16px 14px 14px;
       color: #e5e7eb;
       text-align: center;
-      background: #020617;
-      border-radius: 10px;
-      border: 1px solid #1f2937;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15,23,42,0.85);
+      box-shadow: 0 20px 45px rgba(15,23,42,0.8);
     }
 
     .scan-title {
@@ -344,47 +345,66 @@
 
     .scan-subtitle {
       font-size: 12px;
-      color: #9ca3af;
+      color: #cbd5f5;
       margin-bottom: 10px;
     }
 
     .scan-frame {
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid #4b5563;
+      border-radius: 16px;
+      padding: 10px 0 8px;
       position: relative;
-      background: #020617;
-      padding: 8px 0;
     }
 
-    /* Make scanner container square */
+    /* Square scanner box */
     #qr-reader {
       width: 260px !important;
       height: 260px !important;
       margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid rgba(191,219,254,0.9);
+      box-shadow: 0 0 25px rgba(59,130,246,0.75);
+      background: #020617;
     }
 
-    .scan-overlay-line {
-      display: none; /* removed fancy neon for govt style */
+    /* Subtle animated border overlay */
+    .scan-overlay-square {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 230px;
+      height: 230px;
+      transform: translate(-50%, -50%);
+      border-radius: 18px;
+      border: 1px solid rgba(248, 250, 252, 0.7);
+      pointer-events: none;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+      animation: pulse-border 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
     }
 
     .scan-footer {
-      margin-top: 10px;
+      margin-top: 8px;
       font-size: 11px;
-      color: #9ca3af;
+      color: #cbd5f5;
     }
 
     .scan-actions {
-      margin-top: 12px;
+      margin-top: 11px;
       display: flex;
       justify-content: center;
     }
 
     .scan-btn {
       border-radius: 999px;
-      border: 1px solid #6b7280;
+      border: 1px solid #9ca3af;
       font-size: 13px;
-      padding: 7px 16px;
+      padding: 6px 14px;
       cursor: pointer;
       font-weight: 500;
       background: #111827;
@@ -394,7 +414,7 @@
     .scan-status {
       margin-top: 6px;
       font-size: 11px;
-      color: #9ca3af;
+      color: #cbd5f5;
     }
 
     /* Simple error toast */
@@ -520,7 +540,7 @@
     <!-- Ticket info -->
     <div class="ticket-panel" id="ticket-panel">
       <div class="ticket-panel-header">
-        <div class="ticket-badge">PASS VERIFIED</div>
+        <div class="ticket-badge" id="ticket-status">PASS VERIFIED</div>
         <div class="ticket-id" id="ticket-id"></div>
       </div>
       <div class="ticket-row">
@@ -545,13 +565,14 @@
   <!-- SCAN MODAL -->
   <div class="scan-modal" id="scan-modal">
     <div class="scan-inner">
-      <div class="scan-title">Scan Your QR Bus Card</div>
-      <div class="scan-subtitle">
+      <div class="scan-title" id="scan-title-text">Scan Your QR Bus Card</div>
+      <div class="scan-subtitle" id="scan-subtitle-text">
         Hold your card near the scanner window. The system will detect it automatically.
       </div>
 
       <div class="scan-frame">
         <div id="qr-reader"></div>
+        <div class="scan-overlay-square"></div>
       </div>
 
       <div class="scan-footer">
@@ -582,6 +603,8 @@
     const scanModal = document.getElementById("scan-modal");
     const scanCancelBtn = document.getElementById("scan-cancel-btn");
     const scanStatus = document.getElementById("scan-status");
+    const scanTitleText = document.getElementById("scan-title-text");
+    const scanSubtitleText = document.getElementById("scan-subtitle-text");
     const toastEl = document.getElementById("toast");
     const ticketPanel = document.getElementById("ticket-panel");
     const ticketRoute = document.getElementById("ticket-route");
@@ -589,11 +612,14 @@
     const ticketCard = document.getElementById("ticket-card");
     const ticketTime = document.getElementById("ticket-time");
     const ticketId = document.getElementById("ticket-id");
+    const ticketStatus = document.getElementById("ticket-status");
     const freeCountEl = document.getElementById("free-count");
     const walletBalanceEl = document.getElementById("wallet-balance");
 
     let html5Qr;
     let scanning = false;
+    let scanMode = "issue"; // "issue" or "check"
+    let lastTicket = null;  // store last issued ticket
 
     function showToast(message, ms = 2200) {
       toastEl.textContent = message;
@@ -622,17 +648,32 @@
 
     issueBtn.addEventListener("click", () => {
       if (!validateForm()) return;
+      scanMode = "issue";
       openScanModal();
     });
 
     checkBtn.addEventListener("click", () => {
-      showToast("Check Pass: Scan feature can be reused here.", 2600);
+      if (!lastTicket) {
+        showToast("No ticket found. Issue a pass first.");
+        return;
+      }
+      scanMode = "check";
+      openScanModal();
     });
 
     scanCancelBtn.addEventListener("click", closeScanModal);
 
     function openScanModal() {
       scanModal.classList.add("active");
+
+      if (scanMode === "issue") {
+        scanTitleText.textContent = "Scan to Issue Ticket";
+        scanSubtitleText.textContent = "Show the passenger's QR card to generate a new ticket.";
+      } else {
+        scanTitleText.textContent = "Scan to Check Ticket";
+        scanSubtitleText.textContent = "Show the QR card again to verify existing ticket.";
+      }
+
       scanStatus.textContent = "Initializing camera…";
 
       if (typeof Html5Qrcode === "undefined") {
@@ -692,18 +733,22 @@
     }
 
     function onScanSuccess(decodedText) {
-      scanStatus.textContent = "QR detected. Generating ticket…";
+      scanStatus.textContent = "QR detected…";
 
-      // small delay so it doesn't feel like a sudden jump
       setTimeout(() => {
         stopCamera();
         closeScanModal();
-        generateTicket(decodedText);
-      }, 800);
+
+        if (scanMode === "issue") {
+          generateTicket(decodedText);
+        } else {
+          checkExistingTicket(decodedText);
+        }
+      }, 700);
     }
 
     function onScanFailure(error) {
-      // ignore continuous scan errors
+      // ignore continuous errors
     }
 
     function generateTicket(cardData) {
@@ -717,12 +762,18 @@
       const shortId =
         "TX-" + Math.random().toString(36).slice(2, 8).toUpperCase();
 
-      ticketRoute.textContent = `${sourceEl.value} → ${destEl.value}`;
-      ticketPay.textContent = payEl.value;
-      ticketCard.textContent = cardData || "QR-CARD-XXXX";
-      ticketTime.textContent = timeStr;
-      ticketId.textContent = shortId;
-      ticketPanel.style.display = "block";
+      const ticketInfo = {
+        route: `${sourceEl.value} → ${destEl.value}`,
+        pay: payEl.value,
+        card: cardData || "QR-CARD-XXXX",
+        time: timeStr,
+        id: shortId,
+        status: "PASS VERIFIED"
+      };
+
+      lastTicket = ticketInfo; // store last ticket
+
+      renderTicket(ticketInfo);
 
       if (payEl.value === "Free Ride") {
         const current = parseInt(freeCountEl.textContent || "0", 10);
@@ -732,16 +783,38 @@
         if (current > 10) walletBalanceEl.textContent = current - 10;
       }
 
-      // scroll down a bit so ticket is visible on mobile
       window.scrollTo({
         top: document.body.scrollHeight,
         behavior: "smooth"
       });
 
-      showToast("Pass verified. Digital ticket generated ✅", 2600);
+      showToast("Ticket issued successfully ✅", 2600);
     }
 
-    // Simulate scan with "S" key (for testing without camera)
+    function checkExistingTicket(scannedCard) {
+      if (lastTicket && scannedCard === lastTicket.card) {
+        renderTicket(lastTicket);
+        ticketStatus.textContent = "PASS VERIFIED";
+        ticketStatus.style.background = "#e0f2fe";
+        ticketStatus.style.color = "#075985";
+        showToast("Valid pass for this QR ✅", 2400);
+      } else {
+        ticketPanel.style.display = "none";
+        showToast("No active ticket found for this QR.", 2600);
+      }
+    }
+
+    function renderTicket(t) {
+      ticketRoute.textContent = t.route;
+      ticketPay.textContent = t.pay;
+      ticketCard.textContent = t.card;
+      ticketTime.textContent = t.time;
+      ticketId.textContent = t.id;
+      ticketStatus.textContent = t.status || "PASS VERIFIED";
+      ticketPanel.style.display = "block";
+    }
+
+    // Optional: simulate scan with "S" for testing
     document.addEventListener("keydown", (e) => {
       if (
         scanModal.classList.contains("active") &&
@@ -753,4 +826,3 @@
   </script>
 </body>
 </html>
-
