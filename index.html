@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Bus Ticket Validator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- QR Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      background: #eef2f5;
+      padding: 20px;
+    }
+
+    .machine-card {
+      width: 380px;
+      background: #fff;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.15);
+    }
+
+    /* TSRTC Logo */
+    .tsrtc-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Heading Layout */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .title-text-main { font-size: 20px; font-weight: 700; }
+    .title-text-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+    /* Steps */
+    .steps { display: flex; justify-content: space-between; margin: 15px 0; }
+    .step { display: flex; gap: 6px; font-size: 12px; color: #6b7280; }
+    .step-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      display:flex; align-items:center; justify-content:center;
+      border:1px solid #bbb;
+    }
+    .step.active .step-dot { background:#2563eb; color:white; border:none; }
+
+    /* Fields */
+    .field { margin-top: 10px; }
+    select {
+      width: 100%; padding: 10px; border-radius: 12px;
+      border: 1px solid #ddd; background: #f9fafb;
+      font-size: 14px;
+    }
+
+    /* Buttons */
+    .pill-btn {
+      width: 48%;
+      padding: 12px 10px;
+      border-radius: 12px;
+      border: none;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .issue-btn { background: linear-gradient(135deg,#16a34a,#22c55e); }
+    .check-btn { background: linear-gradient(135deg,#f97316,#ea580c); }
+
+    .bottom-row { display: flex; justify-content: space-between; margin-top: 18px; }
+
+    /* Futuristic Ticket */
+    .ticket-panel {
+      display: none;
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(0, 172, 255, 0.4);
+      box-shadow: 0 0 15px rgba(0,172,255,0.4);
+      animation: slideUp .4s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity:0; }
+      to { transform: translateY(0); opacity:1; }
+    }
+
+    .ticket-title {
+      font-size: 16px; font-weight: 700; color:#111; margin-bottom: 10px;
+    }
+
+    .ticket-row {
+      display: flex; justify-content: space-between;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+    .ticket-label { color:#555; }
+    .ticket-value { font-weight: 700; color:#111; }
+
+    /* SCANNER FIXED SQUARE */
+    #qr-reader {
+      width: 260px !important;
+      height: 260px !important;
+      margin: 0 auto;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* Scan Modal */
+    .scan-modal {
+      position: fixed; inset:0;
+      background: rgba(0,0,0,0.9);
+      display:none; justify-content:center; align-items:center;
+      z-index: 999;
+    }
+    .scan-modal.active { display:flex; }
+
+    .scan-inner { text-align:center; color:white; }
+
+    .scan-status { margin-top: 8px; font-size: 13px; color:#ccc; }
+
+    .scan-btn {
+      margin-top: 12px;
+      padding: 10px 20px;
+      border:none;
+      background:#333;
+      color:white;
+      border-radius: 10px;
+      font-size:14px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:8px 18px;
+      background:#fee2e2;
+      border:1px solid #fecaca;
+      border-radius:12px;
+      color:#991b1b;
+      display:none;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="machine-card">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="title-wrap" style="display:flex; align-items:center; gap:10px;">
+        <img src="https://i.postimg.cc/PqVxgkKv/TGSRTC.png" class="tsrtc-logo">
+
+        <div>
+          <div class="title-text-main">Book Ticket</div>
+          <div class="title-text-sub">Smart TSRTC Validator</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step active"><div class="step-dot">1</div>Route</div>
+      <div class="step"><div class="step-dot">2</div>Scan</div>
+      <div class="step"><div class="step-dot">3</div>Ticket</div>
+    </div>
+
+    <!-- Form -->
+    <div class="field">
+      <label>Source</label>
+      <select id="source">
+        <option value="">Select Source</option>
+        <option>Miyapur</option>
+        <option>KPHB</option>
+        <option>SR Nagar</option>
+        <option>Ameerpet</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Destination</label>
+      <select id="destination">
+        <option value="">Select Destination</option>
+        <option>Miyapur</option>
+        <option>KPHB</option>
+        <option>SR Nagar</option>
+        <option>Ameerpet</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Payment Mode</label>
+      <select id="payment">
+        <option value="">Select Payment</option>
+        <option>Free Ride</option>
+        <option>Cash</option>
+        <option>UPI</option>
+      </select>
+    </div>
+
+    <!-- Buttons -->
+    <div class="bottom-row">
+      <button class="pill-btn issue-btn" id="issue-btn">Issue Pass</button>
+      <button class="pill-btn check-btn">Check Pass</button>
+    </div>
+
+    <!-- FUTURISTIC TICKET -->
+    <div class="ticket-panel" id="ticket-panel">
+      <div class="ticket-title">TSRTC DIGITAL TRAVEL PASS</div>
+
+      <div class="ticket-row"><span class="ticket-label">Route</span><span id="t-route"></span></div>
+      <div class="ticket-row"><span class="ticket-label">Payment</span><span id="t-pay"></span></div>
+      <div class="ticket-row"><span class="ticket-label">Card ID</span><span id="t-card"></span></div>
+      <div class="ticket-row"><span class="ticket-label">Time</span><span id="t-time"></span></div>
+
+    </div>
+
+  </div>
+
+  <!-- SCAN MODAL -->
+  <div class="scan-modal" id="scan-modal">
+    <div class="scan-inner">
+      <h2>Scan Your TSRTC QR Card</h2>
+      <div id="qr-reader"></div>
+      <div class="scan-status" id="scan-status">Initializing camera…</div>
+      <button class="scan-btn" id="cancel-scan">Cancel</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const source = document.getElementById("source");
+  const dest = document.getElementById("destination");
+  const pay = document.getElementById("payment");
+
+  const scanModal = document.getElementById("scan-modal");
+  const issueBtn = document.getElementById("issue-btn");
+  const cancelScan = document.getElementById("cancel-scan");
+
+  const ticketPanel = document.getElementById("ticket-panel");
+  const tRoute = document.getElementById("t-route");
+  const tPay = document.getElementById("t-pay");
+  const tCard = document.getElementById("t-card");
+  const tTime = document.getElementById("t-time");
+
+  const toast = document.getElementById("toast");
+
+  let scanner = null;
+
+  function showToast(msg) {
+    toast.innerText = msg;
+    toast.style.display = "block";
+    setTimeout(() => (toast.style.display = "none"), 2000);
+  }
+
+  function validate() {
+    if (!source.value || !dest.value || !pay.value) {
+      showToast("Please fill all details");
+      return false;
+    }
+    if (source.value === dest.value) {
+      showToast("Source & Destination cannot be same");
+      return false;
+    }
+    return true;
+  }
+
+  // ========== OPEN SCANNER ==========
+  issueBtn.onclick = () => {
+    if (!validate()) return;
+
+    scanModal.classList.add("active");
+
+    if (!scanner) scanner = new Html5Qrcode("qr-reader");
+
+    scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => onScanSuccess(decodedText),
+      () => {}
+    ).then(() => {
+      document.getElementById("scan-status").innerText =
+        "Align QR code inside the square";
+    });
+  };
+
+  cancelScan.onclick = () => {
+    scanModal.classList.remove("active");
+    if (scanner) scanner.stop();
+  };
+
+  // ========== SCAN SUCCESS HANDLER ==========
+  function onScanSuccess(data) {
+    document.getElementById("scan-status").innerText = "QR detected…";
+
+    setTimeout(() => {
+      scanner.stop();
+      scanModal.classList.remove("active");
+      generateTicket(data);
+    }, 900); // smooth delay
+  }
+
+  // ========== GENERATE FUTURISTIC TICKET ==========
+  function generateTicket(cardData) {
+    tRoute.innerText = source.value + " → " + dest.value;
+    tPay.innerText = pay.value;
+    tCard.innerText = cardData;
+    tTime.innerText = new Date().toLocaleTimeString();
+
+    ticketPanel.style.display = "block";
+
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }
+</script>
+</body>
+</html>
