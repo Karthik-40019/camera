@@ -5,6 +5,7 @@
   <title>Smart Bus Ticket Validator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- QR Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" defer></script>
 
   <style>
@@ -13,55 +14,83 @@
 
     .machine-card {
       width: 380px; background: #fff; border-radius: 12px; border: 1px solid #e5e7eb;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); padding: 18px 18px 16px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); padding: 18px;
     }
 
-    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .header { display: flex; align-items: center; justify-content: space-between; }
     .title-wrap { display: flex; align-items: center; gap: 8px; }
 
     .tsrtc-logo { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1px solid #d1d5db; }
 
-    .title-text-main { font-size: 18px; font-weight: 700; color: #111827; }
+    .title-text-main { font-size: 18px; font-weight: 700; }
     .title-text-sub { font-size: 11px; color: #6b7280; }
 
     .badge-row { display: flex; gap: 6px; align-items: center; }
-    .chip { display: flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f9fafb; border:1px solid #e5e7eb; }
-    .chip-icon { width: 16px; height: 16px; border-radius: 50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; }
-    .free .chip-icon { background:#16a34a; } .wallet .chip-icon { background:#f97316; }
+    .chip { display:flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px;
+            background:#f9fafb; border:1px solid #e5e7eb; font-size:11px; font-weight:600; }
+    .chip-icon { width:16px; height:16px; border-radius:50%; display:flex; align-items:center;
+                 justify-content:center; font-size:10px; color:white; }
+    .free .chip-icon { background:#16a34a; }
 
-    .steps { display:flex; justify-content:space-between; margin:8px 0 12px; font-size:11px; color:#6b7280; }
-    .step { display:flex; align-items:center; gap:5px; }
-    .step-dot { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#f9fafb; border:1px solid #d1d5db; }
+    .steps { display:flex; justify-content:space-between; margin:10px 0; font-size:11px; color:#6b7280; }
+    .step { display:flex; gap:4px; align-items:center; }
+    .step-dot { width:17px; height:17px; border-radius:50%; border:1px solid #ccc; display:flex; justify-content:center; align-items:center; font-size:10px; }
     .step.active .step-dot { background:#0b5ed7; color:white; border-color:#0b5ed7; }
 
-    .field { margin-bottom:10px; }
-    select, input { width:100%; padding:8px 10px; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; font-size:13px; }
+    .field { margin-bottom:12px; }
+    select, input {
+      width:100%; padding:8px 10px; border-radius:8px;
+      border:1px solid #d1d5db; background:#f9fafb;
+    }
     select:focus, input:focus { border-color:#0b5ed7; background:white; }
 
-    .primary-btn { width:100%; padding:9px; margin-top:8px; background:#0b5ed7; border:none; color:white; border-radius:999px; font-weight:600; cursor:pointer; }
+    .primary-btn { width:100%; padding:9px; margin-top:8px; border:none; border-radius:999px; background:#0b5ed7; color:white; font-weight:600; }
 
     .bottom-row { display:flex; gap:10px; margin-top:12px; }
-    .pill-btn { flex:1; padding:9px; border-radius:999px; color:white; cursor:pointer; border:none; font-weight:600; }
-    .issue-btn { background:#0b5ed7; } .check-btn { background:#6b7280; }
+    .pill-btn { flex:1; padding:9px; border-radius:999px; background:#0b5ed7; color:white; border:none; font-weight:600; cursor:pointer; }
+    .check-btn { background:#6b7280; }
 
-    .footer-note { font-size:10px; color:#9ca3af; text-align:center; margin-top:10px; }
+    .footer-note { text-align:center; color:#6b7280; font-size:11px; margin-top:12px; }
 
-    .ticket-panel { margin-top:14px; padding:12px; border-radius:10px; background:#f9fafb; border:1px solid #e5e7eb; display:none; }
+    /* TICKET PANEL */
+    .ticket-panel {
+      margin-top:14px; padding:12px; border-radius:10px;
+      background:#f9fafb; border:1px solid #e5e7eb; display:none;
+    }
 
-    /* scanner (kept same futuristic S4) */
-    .scan-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-      background: radial-gradient(circle at top, #2563eb 0%, #020617 55%); z-index:50; padding:16px; }
+    /* SCANNER UI (Futuristic Blue Gradient S4) */
+    .scan-modal {
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background: radial-gradient(circle at top, #2563eb 0%, #020617 55%);
+      z-index:50; padding:20px;
+    }
     .scan-modal.active { display:flex; }
 
-    .scan-inner { max-width:360px; width:100%; background:rgba(15,23,42,0.8); padding:16px; border-radius:14px; color:white; text-align:center; }
-    #qr-reader { width:260px!important; height:260px!important; margin:0 auto; border-radius:16px; border:2px solid rgba(191,219,254); box-shadow:0 0 25px rgba(59,130,246,0.75); }
+    .scan-inner {
+      width:100%; max-width:360px; padding:16px;
+      background:rgba(15,23,42,0.85); border-radius:14px; text-align:center; color:white;
+      box-shadow:0 20px 50px rgba(0,0,0,0.8);
+    }
 
-    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#fee2e2; padding:8px 14px; border-radius:999px; border:1px solid #fecaca; display:none; }
+    #qr-reader {
+      width:260px!important; height:260px!important; margin:auto;
+      border-radius:18px; border:2px solid rgba(191,219,254,0.9);
+      box-shadow:0 0 30px rgba(59,130,246,0.8);
+    }
+
+    .toast {
+      position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+      background:#fee2e2; border:1px solid #fecaca; padding:8px 14px; border-radius:999px;
+      display:none; color:#991b1b;
+    }
+
   </style>
 </head>
 <body>
 
 <div class="machine-card">
+
+  <!-- HEADER -->
   <div class="header">
     <div class="title-wrap">
       <img src="https://i.postimg.cc/PqVxgkKv/TGSRTC.png" class="tsrtc-logo">
@@ -74,39 +103,39 @@
     <div class="badge-row">
       <div class="chip free">
         <div class="chip-icon">F</div>
-        <div><div id="free-count">6</div><div>Free Rides</div></div>
+        <div><div id="free-count">6</div><div style="font-size:10px;">Free Rides</div></div>
       </div>
     </div>
   </div>
 
-  <!-- Steps -->
+  <!-- STEPS -->
   <div class="steps">
-    <div class="step active"><div class="step-dot">1</div><span>Route</span></div>
-    <div class="step"><div class="step-dot">2</div><span>Scan</span></div>
-    <div class="step"><div class="step-dot">3</div><span>Ticket</span></div>
+    <div class="step active"><div class="step-dot">1</div>Route</div>
+    <div class="step"><div class="step-dot">2</div>Scan</div>
+    <div class="step"><div class="step-dot">3</div>Ticket</div>
   </div>
 
-  <!-- Source -->
+  <!-- SOURCE -->
   <div class="field">
-    <div>Source</div>
+    <label>Source</label>
     <select id="source">
       <option value="">Select Source</option>
       <option>Miyapur</option><option>KPHB</option><option>SR Nagar</option><option>Ameerpet</option>
     </select>
   </div>
 
-  <!-- Destination -->
+  <!-- DESTINATION -->
   <div class="field">
-    <div>Destination</div>
+    <label>Destination</label>
     <select id="destination">
       <option value="">Select Destination</option>
       <option>Miyapur</option><option>KPHB</option><option>SR Nagar</option><option>Ameerpet</option>
     </select>
   </div>
 
-  <!-- Payment -->
+  <!-- PAYMENT -->
   <div class="field">
-    <div>Payment Mode</div>
+    <label>Payment Mode</label>
     <select id="payment">
       <option value="">Select Payment</option>
       <option value="Free Ride">Free Ride</option>
@@ -114,12 +143,13 @@
     </select>
   </div>
 
-  <!-- Cash amount (hidden unless payment=cash) -->
+  <!-- CASH AMOUNT FIELD -->
   <div class="field" id="cash-box" style="display:none;">
-    <div>Enter Amount</div>
+    <label>Enter Amount</label>
     <input type="number" id="cash-amount" placeholder="Enter Amount (₹)">
   </div>
 
+  <!-- BUTTONS -->
   <button class="primary-btn" id="continue-btn">Continue</button>
 
   <div class="bottom-row">
@@ -127,9 +157,9 @@
     <button class="pill-btn check-btn" id="check-btn">Check Pass</button>
   </div>
 
-  <div class="footer-note">Tap & Scan – just like a metro entry gate.</div>
+  <div class="footer-note">Tap & Scan – like a metro entry gate.</div>
 
-  <!-- Ticket -->
+  <!-- TICKET PANEL -->
   <div class="ticket-panel" id="ticket-panel">
     <div><b id="ticket-id"></b></div>
     <div>Route: <b id="ticket-route"></b></div>
@@ -137,104 +167,140 @@
     <div>Card ID: <b id="ticket-card"></b></div>
     <div>Time: <b id="ticket-time"></b></div>
   </div>
+
 </div>
 
 <!-- SCAN MODAL -->
 <div class="scan-modal" id="scan-modal">
   <div class="scan-inner">
-    <h3 id="scan-title-text">Scan</h3>
-    <p id="scan-subtitle-text">Align QR properly in the box</p>
-    <div><div id="qr-reader"></div></div>
+    <h3 id="scan-title-text">Scan QR Card</h3>
+    <p id="scan-subtitle-text">Align the QR in the box</p>
+    <div id="qr-reader"></div>
     <p id="scan-status">Initializing camera…</p>
-    <button id="scan-cancel-btn" style="margin-top:10px;">Cancel</button>
+    <button id="scan-cancel-btn" style="margin-top:12px; padding:6px 16px;">Cancel</button>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-  const sourceEl = source, destEl = destination, payEl = payment;
+  const sourceEl = document.getElementById("source");
+  const destEl = document.getElementById("destination");
+  const payEl = document.getElementById("payment");
   const cashBox = document.getElementById("cash-box");
   const cashAmount = document.getElementById("cash-amount");
+
   const issueBtn = document.getElementById("issue-btn");
   const checkBtn = document.getElementById("check-btn");
+
+  const ticketPanel = document.getElementById("ticket-panel");
+  const ticketRoute = document.getElementById("ticket-route");
+  const ticketPay = document.getElementById("ticket-pay");
+  const ticketCard = document.getElementById("ticket-card");
+  const ticketTime = document.getElementById("ticket-time");
+  const ticketId = document.getElementById("ticket-id");
+
   const scanModal = document.getElementById("scan-modal");
   const scanStatus = document.getElementById("scan-status");
-  const ticketPanel = document.getElementById("ticket-panel");
   const toastEl = document.getElementById("toast");
 
-  let html5Qr, scanning=false, scanMode="issue", lastTicket=null;
+  let html5Qr;
+  let scanning = false;
+  let scanMode = "issue";
+  let lastTicket = null;
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.style.display = "block";
+    setTimeout(()=>toastEl.style.display="none",2000);
+  }
 
   payEl.addEventListener("change", ()=>{
     cashBox.style.display = payEl.value==="Cash" ? "block" : "none";
   });
 
-  function showToast(msg){
-    toastEl.textContent=msg; toastEl.style.display="block";
-    setTimeout(()=>toastEl.style.display="none",2000);
-  }
-
   function validateForm(){
-    if(!sourceEl.value||!destEl.value||!payEl.value){ showToast("Fill all fields"); return false; }
-    if(sourceEl.value===destEl.value){ showToast("Route invalid"); return false; }
+    if(!sourceEl.value || !destEl.value || !payEl.value){
+      showToast("Fill all fields"); return false;
+    }
+    if(sourceEl.value === destEl.value){
+      showToast("Source & Destination cannot match"); return false;
+    }
     if(payEl.value==="Cash" && (!cashAmount.value || cashAmount.value<=0)){
-      showToast("Enter cash amount"); return false;
+      showToast("Enter valid cash amount"); return false;
     }
     return true;
   }
 
   issueBtn.onclick = ()=>{
     if(!validateForm()) return;
-    scanMode="issue"; openScanner();
+    scanMode = "issue";
+    openScanner();
   };
 
   checkBtn.onclick = ()=>{
     if(!lastTicket){ showToast("No active ticket"); return; }
-    scanMode="check"; openScanner();
+    scanMode = "check";
+    openScanner();
   };
 
   function openScanner(){
     scanModal.classList.add("active");
-    scanStatus.textContent="Initializing camera…";
-    if(!html5Qr){ html5Qr = new Html5Qrcode("qr-reader"); }
+    if(!html5Qr) html5Qr = new Html5Qrcode("qr-reader");
     startCamera();
   }
 
   document.getElementById("scan-cancel-btn").onclick = ()=>closeScanner();
 
   function startCamera(){
-    if(scanning) return; scanning=true;
-    html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:230,height:230}},
-      onScanSuccess,()=>{}
-    ).then(()=> scanStatus.textContent="Camera ready");
+    if(scanning) return;
+    scanning = true;
+
+    html5Qr.start(
+      { facingMode:"environment" },
+      { fps:10, qrbox:{width:230, height:230} },
+      onScanSuccess, ()=>{}
+    ).then(()=> scanStatus.textContent="Camera Ready");
   }
 
-  function closeScanner(){ scanModal.classList.remove("active"); if(html5Qr) html5Qr.stop(); scanning=false; }
+  function closeScanner(){
+    scanModal.classList.remove("active");
+    if(html5Qr) html5Qr.stop();
+    scanning = false;
+  }
 
   function onScanSuccess(qr){
     closeScanner();
+
     if(scanMode==="issue") generateTicket(qr);
     else verifyTicket(qr);
   }
 
   function generateTicket(qr){
-    const id="TX-"+Math.random().toString(36).substr(2,6).toUpperCase();
-    const time=new Date().toLocaleTimeString();
-    const cashText = payEl.value==="Cash" ? `Cash (₹${cashAmount.value})` : "Free Ride";
+    const id = "TX-" + Math.random().toString(36).slice(2,8).toUpperCase();
+    const time = new Date().toLocaleTimeString();
 
-    lastTicket={
-      id:id, route:`${sourceEl.value} → ${destEl.value}`,
-      pay: cashText, card: qr, time:time
+    const paymentText =
+      payEl.value === "Cash"
+      ? `Cash (₹${cashAmount.value})`
+      : "Free Ride";
+
+    lastTicket = {
+      id:id,
+      route:`${sourceEl.value} → ${destEl.value}`,
+      pay:paymentText,
+      card:qr,              // FIXED
+      time:time
     };
 
     renderTicket(lastTicket);
-    showToast("Pass issued");
+    showToast("Pass Issued");
   }
 
   function verifyTicket(qr){
-    if(lastTicket && lastTicket.card===qr){
-      renderTicket(lastTicket); showToast("Valid Pass");
+    if(lastTicket && lastTicket.card === qr){
+      renderTicket(lastTicket);
+      showToast("Valid Pass");
     } else {
       ticketPanel.style.display="none";
       showToast("No active ticket for this QR");
@@ -242,15 +308,16 @@
   }
 
   function renderTicket(t){
-    ticketPanel.style.display="block";
-    ticket_id.textContent=t.id;
-    ticket_route.textContent=t.route;
-    ticket_pay.textContent=t.pay;
-    ticket_card.textContent=t.card;
-    ticket_time.textContent=t.time;
+    ticketPanel.style.display = "block";
+    ticketId.textContent = t.id;
+    ticketRoute.textContent = t.route;
+    ticketPay.textContent = t.pay;
+    ticketCard.textContent = t.card;   // FIXED
+    ticketTime.textContent = t.time;
   }
 </script>
 
 </body>
 </html>
+
 
