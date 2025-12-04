@@ -5,329 +5,752 @@
   <title>Smart Bus Ticket Validator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- QR Scanner Library -->
+  <!-- QR Scanner Library (CDN) -->
   <script src="https://unpkg.com/html5-qrcode" defer></script>
 
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
 
     body {
       min-height: 100vh;
       display: flex;
+      align-items: center;
       justify-content: center;
-      background: #eef2f5;
+      background: #f3f4f6; /* light grey govt-style */
       padding: 20px;
     }
 
     .machine-card {
       width: 380px;
-      background: #fff;
-      border-radius: 22px;
-      padding: 22px;
-      box-shadow: 0 18px 40px rgba(0,0,0,0.15);
+      max-width: 100%;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+      padding: 18px 18px 16px;
+      position: relative;
     }
 
-    /* TSRTC Logo */
-    .tsrtc-logo {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      object-fit: cover;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-    }
-
-    /* Heading Layout */
     .header {
       display: flex;
+      align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* TSRTC LOGO STYLE */
+    .tsrtc-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid #d1d5db;
+    }
+
+    .title-text-main {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .title-text-sub {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 1px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 6px;
       align-items: center;
     }
 
-    .title-text-main { font-size: 20px; font-weight: 700; }
-    .title-text-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
-
-    /* Steps */
-    .steps { display: flex; justify-content: space-between; margin: 15px 0; }
-    .step { display: flex; gap: 6px; font-size: 12px; color: #6b7280; }
-    .step-dot {
-      width: 18px; height: 18px; border-radius: 50%;
-      display:flex; align-items:center; justify-content:center;
-      border:1px solid #bbb;
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
     }
-    .step.active .step-dot { background:#2563eb; color:white; border:none; }
 
-    /* Fields */
-    .field { margin-top: 10px; }
-    select {
-      width: 100%; padding: 10px; border-radius: 12px;
-      border: 1px solid #ddd; background: #f9fafb;
+    .chip-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #fff;
+    }
+
+    .chip.free {
+      color: #166534;
+    }
+
+    .chip.free .chip-icon {
+      background: #16a34a;
+    }
+
+    .chip.wallet {
+      color: #92400e;
+    }
+
+    .chip.wallet .chip-icon {
+      background: #f97316;
+    }
+
+    .chip-value {
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .chip-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.8;
+    }
+
+    /* Step indicator */
+    .steps {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0 12px;
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .step-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #6b7280;
+    }
+
+    .step.active .step-dot {
+      background: #0b5ed7; /* D4 govt blue */
+      border-color: #0b5ed7;
+      color: #fff;
+    }
+
+    .step.active span {
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .step-line {
+      flex: 1;
+      height: 1px;
+      margin: 0 7px;
+      background: linear-gradient(to right, #0b5ed7, #d1d5db);
+    }
+
+    /* Form */
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      color: #4b5563;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field-label-icon {
       font-size: 14px;
     }
 
-    /* Buttons */
-    .pill-btn {
-      width: 48%;
-      padding: 12px 10px;
-      border-radius: 12px;
-      border: none;
-      color: white;
-      font-weight: 600;
+    select {
+      width: 100%;
+      border-radius: 8px;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      outline: none;
+      background-color: #f9fafb;
       cursor: pointer;
     }
 
-    .issue-btn { background: linear-gradient(135deg,#16a34a,#22c55e); }
-    .check-btn { background: linear-gradient(135deg,#f97316,#ea580c); }
+    select:focus {
+      border-color: #0b5ed7;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 1px rgba(11, 94, 215, 0.3);
+    }
 
-    .bottom-row { display: flex; justify-content: space-between; margin-top: 18px; }
+    .primary-btn {
+      margin-top: 8px;
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #0b5ed7; /* D4 govt blue */
+      color: #ffffff;
+      cursor: pointer;
+    }
 
-    /* Futuristic Ticket */
+    .primary-btn:active {
+      opacity: 0.9;
+    }
+
+    .bottom-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .pill-btn {
+      flex: 1;
+      border-radius: 999px;
+      padding: 9px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      color: #ffffff;
+    }
+
+    .issue-btn {
+      background: #0b5ed7;
+    }
+
+    .check-btn {
+      background: #6b7280;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      font-size: 10px;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    /* Ticket panel - clean govt style */
     .ticket-panel {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 12px;
+      color: #374151;
       display: none;
-      margin-top: 22px;
-      padding: 18px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.6);
-      backdrop-filter: blur(10px);
-      border: 2px solid rgba(0, 172, 255, 0.4);
-      box-shadow: 0 0 15px rgba(0,172,255,0.4);
-      animation: slideUp .4s ease;
     }
 
-    @keyframes slideUp {
-      from { transform: translateY(20px); opacity:0; }
-      to { transform: translateY(0); opacity:1; }
+    .ticket-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
     }
 
-    .ticket-title {
-      font-size: 16px; font-weight: 700; color:#111; margin-bottom: 10px;
+    .ticket-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 600;
+      border: 1px solid #bfdbfe;
+    }
+
+    .ticket-id {
+      font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 11px;
+      color: #6b7280;
     }
 
     .ticket-row {
-      display: flex; justify-content: space-between;
-      padding: 6px 0;
-      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      margin: 1px 0;
     }
-    .ticket-label { color:#555; }
-    .ticket-value { font-weight: 700; color:#111; }
 
-    /* SCANNER FIXED SQUARE */
+    .ticket-label {
+      color: #6b7280;
+    }
+
+    .ticket-value {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    /* Scan modal */
+    .scan-modal {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .scan-modal.active {
+      display: flex;
+    }
+
+    .scan-inner {
+      width: 100%;
+      max-width: 360px;
+      padding: 18px 14px 16px;
+      color: #e5e7eb;
+      text-align: center;
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+    }
+
+    .scan-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .scan-subtitle {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 10px;
+    }
+
+    .scan-frame {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #4b5563;
+      position: relative;
+      background: #020617;
+      padding: 8px 0;
+    }
+
+    /* Make scanner container square */
     #qr-reader {
       width: 260px !important;
       height: 260px !important;
       margin: 0 auto;
-      border-radius: 16px;
-      overflow: hidden;
     }
 
-    /* Scan Modal */
-    .scan-modal {
-      position: fixed; inset:0;
-      background: rgba(0,0,0,0.9);
-      display:none; justify-content:center; align-items:center;
-      z-index: 999;
+    .scan-overlay-line {
+      display: none; /* removed fancy neon for govt style */
     }
-    .scan-modal.active { display:flex; }
 
-    .scan-inner { text-align:center; color:white; }
+    .scan-footer {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
 
-    .scan-status { margin-top: 8px; font-size: 13px; color:#ccc; }
+    .scan-actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+    }
 
     .scan-btn {
-      margin-top: 12px;
-      padding: 10px 20px;
-      border:none;
-      background:#333;
-      color:white;
-      border-radius: 10px;
-      font-size:14px;
+      border-radius: 999px;
+      border: 1px solid #6b7280;
+      font-size: 13px;
+      padding: 7px 16px;
+      cursor: pointer;
+      font-weight: 500;
+      background: #111827;
+      color: #e5e7eb;
     }
 
+    .scan-status {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    /* Simple error toast */
     .toast {
       position: fixed;
-      bottom:20px;
-      left:50%;
-      transform:translateX(-50%);
-      padding:8px 18px;
-      background:#fee2e2;
-      border:1px solid #fecaca;
-      border-radius:12px;
-      color:#991b1b;
-      display:none;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      background: #fef2f2;
+      color: #991b1b;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 11px;
+      border: 1px solid #fecaca;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+      display: none;
+      z-index: 60;
     }
-
   </style>
 </head>
 <body>
 
   <div class="machine-card">
-
-    <!-- Header -->
     <div class="header">
-      <div class="title-wrap" style="display:flex; align-items:center; gap:10px;">
-        <img src="https://i.postimg.cc/PqVxgkKv/TGSRTC.png" class="tsrtc-logo">
-
+      <div class="title-wrap">
+        <img src="https://i.postimg.cc/PqVxgkKv/TGSRTC.png" class="tsrtc-logo" alt="TSRTC Logo">
         <div>
           <div class="title-text-main">Book Ticket</div>
-          <div class="title-text-sub">Smart TSRTC Validator</div>
+          <div class="title-text-sub">TelanganaUnified</div>
+        </div>
+      </div>
+      <div class="badge-row">
+        <div class="chip free">
+          <div class="chip-icon">F</div>
+          <div>
+            <div class="chip-value" id="free-count">6</div>
+            <div class="chip-label">Free Rides</div>
+          </div>
+        </div>
+
+        <div class="chip wallet">
+          <div class="chip-icon">₹</div>
+          <div>
+            <div class="chip-value" id="wallet-balance">120</div>
+            <div class="chip-label">Wallet</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Steps -->
+    <!-- Step indicator -->
     <div class="steps">
-      <div class="step active"><div class="step-dot">1</div>Route</div>
-      <div class="step"><div class="step-dot">2</div>Scan</div>
-      <div class="step"><div class="step-dot">3</div>Ticket</div>
+      <div class="step active">
+        <div class="step-dot">1</div>
+        <span>Route</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-dot">2</div>
+        <span>Scan</span>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-dot">3</div>
+        <span>Ticket</span>
+      </div>
     </div>
 
-    <!-- Form -->
+    <!-- Route form -->
     <div class="field">
-      <label>Source</label>
+      <div class="field-label">
+        <span class="field-label-icon">🅰️</span>
+        <span>Source</span>
+      </div>
       <select id="source">
         <option value="">Select Source</option>
-        <option>Miyapur</option>
-        <option>KPHB</option>
-        <option>SR Nagar</option>
-        <option>Ameerpet</option>
+        <option value="Miyapur">Miyapur</option>
+        <option value="KPHB">KPHB</option>
+        <option value="SR Nagar">SR Nagar</option>
+        <option value="Ameerpet">Ameerpet</option>
       </select>
     </div>
 
     <div class="field">
-      <label>Destination</label>
+      <div class="field-label">
+        <span class="field-label-icon">🅱️</span>
+        <span>Destination</span>
+      </div>
       <select id="destination">
         <option value="">Select Destination</option>
-        <option>Miyapur</option>
-        <option>KPHB</option>
-        <option>SR Nagar</option>
-        <option>Ameerpet</option>
+        <option value="Miyapur">Miyapur</option>
+        <option value="KPHB">KPHB</option>
+        <option value="SR Nagar">SR Nagar</option>
+        <option value="Ameerpet">Ameerpet</option>
       </select>
     </div>
 
     <div class="field">
-      <label>Payment Mode</label>
+      <div class="field-label">
+        <span class="field-label-icon">💳</span>
+        <span>Payment Mode</span>
+      </div>
       <select id="payment">
         <option value="">Select Payment</option>
-        <option>Free Ride</option>
-        <option>Cash</option>
-        <option>UPI</option>
+        <option value="Free Ride">Free Ride</option>
+        <option value="Wallet">Wallet</option>
+        <option value="Cash">Cash</option>
+        <option value="Card">Card</option>
       </select>
     </div>
 
-    <!-- Buttons -->
+    <button class="primary-btn" id="continue-btn">Continue</button>
+
     <div class="bottom-row">
       <button class="pill-btn issue-btn" id="issue-btn">Issue Pass</button>
-      <button class="pill-btn check-btn">Check Pass</button>
+      <button class="pill-btn check-btn" id="check-btn">Check Pass</button>
     </div>
 
-    <!-- FUTURISTIC TICKET -->
+    <div class="footer-note">
+      Tap &amp; Scan – just like a metro entry gate.
+    </div>
+
+    <!-- Ticket info -->
     <div class="ticket-panel" id="ticket-panel">
-      <div class="ticket-title">TSRTC DIGITAL TRAVEL PASS</div>
-
-      <div class="ticket-row"><span class="ticket-label">Route</span><span id="t-route"></span></div>
-      <div class="ticket-row"><span class="ticket-label">Payment</span><span id="t-pay"></span></div>
-      <div class="ticket-row"><span class="ticket-label">Card ID</span><span id="t-card"></span></div>
-      <div class="ticket-row"><span class="ticket-label">Time</span><span id="t-time"></span></div>
-
+      <div class="ticket-panel-header">
+        <div class="ticket-badge">PASS VERIFIED</div>
+        <div class="ticket-id" id="ticket-id"></div>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-label">Route</span>
+        <span class="ticket-value" id="ticket-route"></span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-label">Payment</span>
+        <span class="ticket-value" id="ticket-pay"></span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-label">Card ID</span>
+        <span class="ticket-value" id="ticket-card"></span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-label">Time</span>
+        <span class="ticket-value" id="ticket-time"></span>
+      </div>
     </div>
-
   </div>
 
   <!-- SCAN MODAL -->
   <div class="scan-modal" id="scan-modal">
     <div class="scan-inner">
-      <h2>Scan Your TSRTC QR Card</h2>
-      <div id="qr-reader"></div>
-      <div class="scan-status" id="scan-status">Initializing camera…</div>
-      <button class="scan-btn" id="cancel-scan">Cancel</button>
+      <div class="scan-title">Scan Your QR Bus Card</div>
+      <div class="scan-subtitle">
+        Hold your card near the scanner window. The system will detect it automatically.
+      </div>
+
+      <div class="scan-frame">
+        <div id="qr-reader"></div>
+      </div>
+
+      <div class="scan-footer">
+        Keep the QR code fully visible inside the square.
+      </div>
+
+      <div class="scan-actions">
+        <button class="scan-btn" id="scan-cancel-btn">Cancel</button>
+      </div>
+
+      <div class="scan-status" id="scan-status">
+        Initializing camera…
+      </div>
     </div>
   </div>
 
+  <!-- Simple toast -->
   <div class="toast" id="toast"></div>
 
-<script>
-  const source = document.getElementById("source");
-  const dest = document.getElementById("destination");
-  const pay = document.getElementById("payment");
+  <script>
+    // UI elements
+    const sourceEl = document.getElementById("source");
+    const destEl = document.getElementById("destination");
+    const payEl = document.getElementById("payment");
+    const continueBtn = document.getElementById("continue-btn");
+    const issueBtn = document.getElementById("issue-btn");
+    const checkBtn = document.getElementById("check-btn");
+    const scanModal = document.getElementById("scan-modal");
+    const scanCancelBtn = document.getElementById("scan-cancel-btn");
+    const scanStatus = document.getElementById("scan-status");
+    const toastEl = document.getElementById("toast");
+    const ticketPanel = document.getElementById("ticket-panel");
+    const ticketRoute = document.getElementById("ticket-route");
+    const ticketPay = document.getElementById("ticket-pay");
+    const ticketCard = document.getElementById("ticket-card");
+    const ticketTime = document.getElementById("ticket-time");
+    const ticketId = document.getElementById("ticket-id");
+    const freeCountEl = document.getElementById("free-count");
+    const walletBalanceEl = document.getElementById("wallet-balance");
 
-  const scanModal = document.getElementById("scan-modal");
-  const issueBtn = document.getElementById("issue-btn");
-  const cancelScan = document.getElementById("cancel-scan");
+    let html5Qr;
+    let scanning = false;
 
-  const ticketPanel = document.getElementById("ticket-panel");
-  const tRoute = document.getElementById("t-route");
-  const tPay = document.getElementById("t-pay");
-  const tCard = document.getElementById("t-card");
-  const tTime = document.getElementById("t-time");
-
-  const toast = document.getElementById("toast");
-
-  let scanner = null;
-
-  function showToast(msg) {
-    toast.innerText = msg;
-    toast.style.display = "block";
-    setTimeout(() => (toast.style.display = "none"), 2000);
-  }
-
-  function validate() {
-    if (!source.value || !dest.value || !pay.value) {
-      showToast("Please fill all details");
-      return false;
+    function showToast(message, ms = 2200) {
+      toastEl.textContent = message;
+      toastEl.style.display = "block";
+      setTimeout(() => {
+        toastEl.style.display = "none";
+      }, ms);
     }
-    if (source.value === dest.value) {
-      showToast("Source & Destination cannot be same");
-      return false;
+
+    function validateForm() {
+      if (!sourceEl.value || !destEl.value || !payEl.value) {
+        showToast("Please select Source, Destination and Payment.");
+        return false;
+      }
+      if (sourceEl.value === destEl.value) {
+        showToast("Source and Destination must be different.");
+        return false;
+      }
+      return true;
     }
-    return true;
-  }
 
-  // ========== OPEN SCANNER ==========
-  issueBtn.onclick = () => {
-    if (!validate()) return;
-
-    scanModal.classList.add("active");
-
-    if (!scanner) scanner = new Html5Qrcode("qr-reader");
-
-    scanner.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      (decodedText) => onScanSuccess(decodedText),
-      () => {}
-    ).then(() => {
-      document.getElementById("scan-status").innerText =
-        "Align QR code inside the square";
+    continueBtn.addEventListener("click", () => {
+      if (!validateForm()) return;
+      showToast("Route set. Tap 'Issue Pass' to scan card.", 2600);
     });
-  };
 
-  cancelScan.onclick = () => {
-    scanModal.classList.remove("active");
-    if (scanner) scanner.stop();
-  };
+    issueBtn.addEventListener("click", () => {
+      if (!validateForm()) return;
+      openScanModal();
+    });
 
-  // ========== SCAN SUCCESS HANDLER ==========
-  function onScanSuccess(data) {
-    document.getElementById("scan-status").innerText = "QR detected…";
+    checkBtn.addEventListener("click", () => {
+      showToast("Check Pass: Scan feature can be reused here.", 2600);
+    });
 
-    setTimeout(() => {
-      scanner.stop();
+    scanCancelBtn.addEventListener("click", closeScanModal);
+
+    function openScanModal() {
+      scanModal.classList.add("active");
+      scanStatus.textContent = "Initializing camera…";
+
+      if (typeof Html5Qrcode === "undefined") {
+        scanStatus.textContent =
+          "Unable to load scanner library. Check internet connection.";
+        return;
+      }
+
+      if (!html5Qr) {
+        html5Qr = new Html5Qrcode("qr-reader");
+      }
+
+      startCamera();
+    }
+
+    function closeScanModal() {
       scanModal.classList.remove("active");
-      generateTicket(data);
-    }, 900); // smooth delay
-  }
+      stopCamera();
+    }
 
-  // ========== GENERATE FUTURISTIC TICKET ==========
-  function generateTicket(cardData) {
-    tRoute.innerText = source.value + " → " + dest.value;
-    tPay.innerText = pay.value;
-    tCard.innerText = cardData;
-    tTime.innerText = new Date().toLocaleTimeString();
+    function startCamera() {
+      if (scanning) return;
+      scanning = true;
 
-    ticketPanel.style.display = "block";
+      const config = {
+        fps: 10,
+        qrbox: { width: 230, height: 230 } // perfect square
+      };
 
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  }
-</script>
+      html5Qr
+        .start(
+          { facingMode: "environment" },
+          config,
+          onScanSuccess,
+          onScanFailure
+        )
+        .then(() => {
+          scanStatus.textContent =
+            "Camera active. Align the QR inside the square.";
+        })
+        .catch((err) => {
+          console.error(err);
+          scanStatus.textContent =
+            "Camera start failed. Please allow camera permission.";
+          scanning = false;
+        });
+    }
+
+    function stopCamera() {
+      if (!html5Qr || !scanning) return;
+      html5Qr
+        .stop()
+        .catch((err) => console.error("Stop error:", err))
+        .finally(() => {
+          scanning = false;
+        });
+    }
+
+    function onScanSuccess(decodedText) {
+      scanStatus.textContent = "QR detected. Generating ticket…";
+
+      // small delay so it doesn't feel like a sudden jump
+      setTimeout(() => {
+        stopCamera();
+        closeScanModal();
+        generateTicket(decodedText);
+      }, 800);
+    }
+
+    function onScanFailure(error) {
+      // ignore continuous scan errors
+    }
+
+    function generateTicket(cardData) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+
+      const shortId =
+        "TX-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+
+      ticketRoute.textContent = `${sourceEl.value} → ${destEl.value}`;
+      ticketPay.textContent = payEl.value;
+      ticketCard.textContent = cardData || "QR-CARD-XXXX";
+      ticketTime.textContent = timeStr;
+      ticketId.textContent = shortId;
+      ticketPanel.style.display = "block";
+
+      if (payEl.value === "Free Ride") {
+        const current = parseInt(freeCountEl.textContent || "0", 10);
+        if (current > 0) freeCountEl.textContent = current - 1;
+      } else if (payEl.value === "Wallet") {
+        const current = parseInt(walletBalanceEl.textContent || "0", 10);
+        if (current > 10) walletBalanceEl.textContent = current - 10;
+      }
+
+      // scroll down a bit so ticket is visible on mobile
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+      });
+
+      showToast("Pass verified. Digital ticket generated ✅", 2600);
+    }
+
+    // Simulate scan with "S" key (for testing without camera)
+    document.addEventListener("keydown", (e) => {
+      if (
+        scanModal.classList.contains("active") &&
+        e.key.toLowerCase() === "s"
+      ) {
+        onScanSuccess("SIMULATED-CARD-1234");
+      }
+    });
+  </script>
 </body>
 </html>
+
